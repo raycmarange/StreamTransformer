@@ -8,13 +8,6 @@ Transformer-Based Classification for  Dynamic Data Streams
 
 **Author:** Ray C. Marange
 
-**Supervisor:** Dr. Heitor Murilo Gomes
-
-**University:** Victoria University of Wellington, NZ
-
-**Year:** 2026
-
-**Project:** AIML 589 Master's Thesis
 
 ## Overview
 
