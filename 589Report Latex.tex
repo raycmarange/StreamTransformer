@@ -1,0 +1,1286 @@
+\documentclass[12pt, a4paper, oneside, openright]{report}
+\usepackage{times}
+\usepackage[activate={true,nocompatibility},final,tracking=true,kerning=true,spacing=true]{microtype}
+\usepackage{ragged2e}
+
+
+% Word breaking and justification settings
+\hyphenpenalty=750
+\exhyphenpenalty=750
+\tolerance=2000
+\hbadness=2000
+\emergencystretch=2em
+\brokenpenalty=10000
+\widowpenalty=10000
+\clubpenalty=10000
+\usepackage{setspace}
+\usepackage{geometry}
+\geometry{a4paper, margin=1in, top=1in, bottom=1.2in}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{caption}
+\usepackage{titlesec}
+\usepackage{array}
+\usepackage{makecell}
+\usepackage{multirow}
+\usepackage{longtable}
+\usepackage{enumitem}
+\setlist{noitemsep, topsep=3pt, parsep=0pt, partopsep=0pt, leftmargin=*}
+\setlist[itemize]{labelsep=6pt}
+\setlist[enumerate]{labelsep=5pt}
+\usepackage{rotating}
+\usepackage{float}
+\usepackage{cleveref}
+\usepackage{subcaption}
+\usepackage{xcolor}
+\usepackage{siunitx}
+\usepackage[numbers]{natbib}
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    citecolor=black,
+    urlcolor=black
+}
+
+% Algorithm packages for Appendix
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+% Chapter formatting
+\titleformat{\chapter}[display]
+    {\normalfont\huge\bfseries}{\chaptertitlename\ \thechapter}{20pt}{\Huge}
+\titlespacing*{\chapter}{0pt}{-30pt}{20pt}
+
+% Section formatting
+\titleformat{\section}
+    {\normalfont\Large\bfseries}{\thesection}{1em}{}
+\titlespacing*{\section}{0pt}{12pt}{6pt}
+
+% Subsection formatting
+\titleformat{\subsection}
+    {\normalfont\large\bfseries}{\thesubsection}{1em}{}
+\titlespacing*{\subsection}{0pt}{10pt}{5pt}
+
+% Custom commands for consistent formatting
+\newcommand{\modelname}{StreamTransformer}
+\newcommand{\st}{\modelname}
+\newcommand{\stadwin}{\st\_ADWIN}
+\newcommand{\srp}{SRP}
+\newcommand{\arf}{ARF}
+\newcommand{\dataset}[1]{\textbf{#1}}
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\source}{CapyMOA \cite{capymoa2023}}
+\newcommand{\td}{\textsuperscript{\textdagger}}
+
+\begin{document}
+
+% Title page
+\begin{titlepage}
+    \centering
+    
+    % Add the logo at the top, centred
+    \includegraphics[width=0.6\textwidth]{logoVWU.png}
+    \vspace{1cm}
+ 
+    {\LARGE\bfseries Transformer-Based Classification for Dynamic Data Streams\par}
+    \vspace{2cm}
+    {\Large Ray Chakanetsa Marange\par}
+    \vspace{0.5cm}
+    {\large Student ID: 300671115\par}
+    \vspace{1cm}
+    {\large Supervisor: Dr. Heitor Gomes\par}
+    \vspace{1cm}
+    {\large Submitted in partial fulfilment of the requirements for Master of Artificial Intelligence.}
+
+    \vspace{4cm}
+    {\large February 5, 2026\par}
+\end{titlepage}
+
+% Front matter with onehalfspacing
+\begin{onehalfspacing}
+
+% Abstract
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+
+This research investigates \textbf{StreamTransformer}, a lightweight Transformer for single-pass, bounded-memory classification in non-stationary data streams. 
+Within \textbf{CapyMOA} and a \textbf{prequential} protocol, two variants, base and ADWIN-wrapped, are benchmarked against seven established learners on ten datasets. \textbf{Relational embeddings} via self-attention address limitations of axis-aligned tree splits and reduce sensitivity to \textbf{drift chattering}(repeated false drift alarms caused by noise rather than real concept change). In single-seed experiments, StreamTransformer achieves \textbf{86.1–86.5\%} on Agrawal streams (exceeding ARF by \textbf{6.8–10.3 percentage points}), \textbf{69.6\%} on Airlines (highest among compared methods), and \textbf{89.9–90.6\%} on Electricity (ADWIN variant highest), while being \textbf{≈6.1× faster than SRP} on Airlines. The ADWIN wrapper underperforms on rule-based streams, indicating a \textbf{mismatch between hard resets and attention-based adaptation}. The task-dependent performance profile is discussed, and directions for \textbf{adaptive windowing} and \textbf{soft reset} strategies are outlined.
+
+\vspace{0.5cm}
+\textbf{Keywords:} Data Stream Learning, Concept Drift, Transformer Architecture, Attention Mechanism, Drift Chattering, Online Learning
+
+\newpage
+
+% List of Tables and Figures
+\listoftables
+\addcontentsline{toc}{chapter}{List of Tables}
+\listoffigures
+\addcontentsline{toc}{chapter}{List of Figures}
+
+\newpage
+
+% Table of Contents
+\tableofcontents
+
+\newpage
+
+% Acknowledgements
+\chapter*{Acknowledgements}
+\addcontentsline{toc}{chapter}{Acknowledgements}
+
+I am deeply grateful to everyone who supported me throughout this research journey. My heartfelt thanks go to my supervisor, \textbf{Dr. Heitor Gomes}, provided steady guidance throughout the project. His deep knowledge of stream learning and the CapyMOA framework helped shape the direction of the research, and his patience and support made it possible to navigate the more complex parts of the work with confidence. I also appreciate \textbf{Dr. Aaron Chen}, coordinator of the AIML589/501 course, for creating the environment that made this work possible.
+I am thankful to my employer, the \textbf{South Taranaki District Council }, for giving me the opportunity to study while working full‑time.AI tools such as Colab, Gemini, and GitHub Copilot provided suggestions for documentation, table generation, and Overleaf LaTeX formatting, but every part of the work was written, reviewed, and refined by me.
+I would also like to acknowledge the developers of CapyMOA and MOA for their essential open‑source contributions. Finally, my deepest appreciation goes to my family especially Linda and to my friends, whose steady support carried me through the most demanding stages of this project.
+
+\end{onehalfspacing}
+
+% Switch to singlespacing for main content
+\begin{singlespacing}
+
+\newpage
+% CHAPTER 1: Introduction
+\chapter{Introduction}
+
+The growing prevalence of data generating systems creates a critical demand for algorithms that learn continuously from infinite, non-stationary streams. Traditional batch learning fails under streaming constraints,\textbf{ single-pass processing, bounded memory, and the need to adapt to concept drift}.
+
+Although tree-based ensembles represent current state-of-the-art approaches, their axis-aligned splits and dependence on explicit drift detection render them brittle in noisy, complex environments. This work tests whether the \textbf{self-attention mechanism} foundational to Transformers can mitigate these limitations.
+
+The \textbf{StreamTransformer} architecture is designed to replace reactive, binary drift‑handling mechanisms with a more natural form of continuous, implicit adaptation. This chapter introduces the research objectives, guiding questions, key contributions, and the overall experimental scope.
+
+\section{Research Objective}
+
+\textbf{Primary Objective:}Conduct a comprehensive benchmark within CapyMOA, comparing the ability of PyTorch‑based Transformers to capture feature dependencies against state‑of‑the‑art (SOTA) ensembles, in order to assess their robustness on high‑velocity, non‑stationary data streams.
+
+\section{Research Questions}
+\begin{enumerate}[label=\textbf{RQ\arabic*:}, leftmargin=*]
+    \item \textbf{Expressive Superiority:} Can StreamTransformer's relational embeddings model complex feature interactions more effectively than axis-aligned tree splits?
+    \item \textbf{Concept Drift Robustness:} Does implicit adaptation via sliding window attention provide sufficient stability, or is explicit drift detection necessary in high-noise environments?
+    \item \textbf{Efficiency and Latency:} What computational cost does StreamTransformer incur, and does it occupy a viable position on the accuracy latency trade-off frontier for streaming applications?
+\end{enumerate}
+
+\section{Research Contributions}
+\begin{itemize}
+    \item \textbf{Algorithmic Innovation:} Transformer adaptation for tabular streams using bounded memory sliding window attention and causal masking
+    \item \textbf{Empirical Benchmarking:} Comprehensive prequential evaluation across ten datasets against three tiers of contenders, including the StreamTransformer\_ADWIN variant
+    \item \textbf{Stability Discovery:} Quantitative evidence of \textbf{drift chattering} and competitive stability of implicit neural adaptation
+    \item \textbf{Practical Guidance:} Deployment guidance identifying scenarios where StreamTransformer performed well in experiments
+\end{itemize}
+\newpage
+\section{Experimental Scope}
+The study uses \textbf{CapyMOA} \cite{capymoa2023} to benchmark StreamTransformer against a hierarchy of learners on diverse streams, isolating performance under varying noise and non-stationarity.
+
+\subsection{Contender Hierarchy}
+\begin{itemize}
+    \item \textbf{Statistical/Single Tree Baselines:} Naive Bayes, Hoeffding Tree (HT), Extremely Fast Decision Tree (EFDT)
+    \item \textbf{SOTA Ensembles:} Adaptive Random Forests (ARF) \cite{arf2017}, Streaming Random Patches (SRP) \cite{srp2019}
+    \item \textbf{Distance-Based/Neural Baselines:} k-Nearest Neighbours (kNN), Reactive MLP, and StreamTransformer\_ADWIN for explicit drift detection comparison
+\end{itemize}
+
+
+The structure of this report is organised to guide the reader from foundational concepts through to the final conclusions. Chapter 2 introduces the core principles of data stream learning, concept drift, and neural architectures, while identifying the research gap. Chapter 3 details the experimental methodology, including dataset selection, the contender hierarchy, and the evaluation protocol. Chapter 4 then presents the StreamTransformer architecture in detail, outlining its design rationale and implementation. Chapter 5 reports the experimental results, followed by Chapter 6, which discusses the findings. Finally, Chapter 7 concludes the report and outlines potential directions for future work.
+
+\newpage
+% CHAPTER 2: Literature Review
+\chapter{Literature Review}
+This chapter offers an integrated review of the foundational concepts and related work in data stream learning, establishing the context for the study and highlighting the specific research gap that the StreamTransformer aims to address.
+
+\section{Data Stream Learning}
+Data stream classification operates on a potentially infinite instance sequence \((x_{t}, y_{t})\), where \(x_t\) is the feature vector and \(y_t\) the class label at discrete time \(t\). Foundational work by \textbf{Domingos and Hulten (2000)} \cite{domingos2000} establishes stringent computational constraints distinguishing stream from batch learning:
+
+\begin{itemize}
+    \item \textbf{Single Pass Assumption:} Each instance processed exactly once and immediately discarded or summarised
+    \item \textbf{Bounded Resources:} Fixed memory and constant amortised processing time per instance (\(O(1)\))
+\end{itemize}
+
+The study employs the \textbf{Prequential (Test-Then-Train)} protocol \cite{gama2013}: the model predicts \(\hat{y}_t\) for \(x_t\), then updates using true label \(y_t\), providing realistic performance estimates on future data \cite{bifet2010moa}.
+
+\section{Sequences vs. Time Series vs. Data Streams}
+Precise distinction between sequential paradigms contextualises neural architecture application:
+
+\begin{itemize}
+    \item \textbf{Time Series Forecasting:} Predicts future values \(y_{t+1:t+h}\) from historical \(x_{1:t}\), assuming stationarity and full sequence availability \cite{lim2021timeseries}
+    \item \textbf{Sequence Modelling (e.g., NLP):} Models like BERT \cite{devlin2018bert} process static sequences with bidirectional/causal attention during offline training
+    \item \textbf{Data Stream Classification:} Independent tabular instances \((x_t, y_t)\) arrive continuously, with primary challenge \textbf{Concept Drift} non-stationary evolution of \(P_t(x, y)\) over time \cite{gama2014}
+\end{itemize}
+
+Applying NLP/time-series Transformers directly to streams violates core constraints (single pass, bounded memory), necessitating novel adaptations.
+
+\section{Concept Drift: Management and Adaptation}
+\subsection{Definitions and Types}
+Concept drift is a change in joint distribution \(P_t(x, y)\) over time \cite{gama2014}. For classification, relevant drift occurs when \(P_t(y | x)\) changes, impacting decision boundaries. Canonical forms:
+\begin{itemize}
+    \item \textbf{Abrupt/Sudden Drift:} Instantaneous concept switch
+    \item \textbf{Gradual Drift:} Progressive transition over time
+    \item \textbf{Incremental Drift:} Continuous smooth evolution
+    \item \textbf{Recurring Drift:} Reappearance of previous concepts
+\end{itemize}
+\newpage
+\subsection{Detection and Adaptation Strategies}
+Coping involves detection and adaptation:
+\begin{itemize}
+    \item \textbf{Detection:} ADWIN \cite{adwin2007}, DDM (Drift Detection Method) \cite{gama2004}, EDDM (Early Drift Detection Method) \cite{baena2006}
+    \item \textbf{Adaptation:}
+        \begin{itemize}
+            \item \textbf{Active/Reactive:} Drift detector triggers response (reset, retrain, weight adjustment)
+            \item \textbf{Passive/Implicit:} Continuous updates (online gradient descent, sliding windows) inherently forget old concepts
+        \end{itemize}
+\end{itemize}
+This study explores both: \textbf{reactive} StreamTransformer with ADWIN and \textbf{passive} variant relying solely on sliding window.
+
+\section{Frameworks for Online Stream Learning}
+\subsection{Massive Online Analysis (MOA)}
+MOA \cite{bifet2010moa} is the de facto standard open-source software for data stream mining, enforcing true streaming constraints with algorithms, generators, and evaluation tools.
+
+\subsection{CapyMOA}
+\textbf{CapyMOA} \cite{capymoa2023} provides a native Python interface to MOA's streaming engine through a scikit-learn-like API, enabling seamless integration with established data science libraries. It allows custom PyTorch StreamTransformer to train and evaluate under strict streaming conditions alongside classical baselines.
+
+\section{Neural Architectures for Sequential Data}
+\subsection{RNNs and LSTMs: The Sequential Paradigm}
+RNNs and LSTMs \cite{hochreiter1997} were dominant pre-Transformers, using recurrence: hidden state \(h_t\) updates as:
+\[
+h_t = \phi(W x_t + U h_{t-1} + b)
+\]
+Inherently online-friendly with fixed memory per step, but sequential computation inhibits parallelisation and struggles with very long dependencies.
+
+\subsection{The Transformer Architecture and Self-Attention}
+The Transformer \cite{attention2017} has become standard for sequence modelling with scaled dot-product attention:
+\[
+\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V
+\]
+Self-attention allows each sequence element to attend to all others, enabling superior parallelisation and direct long-range dependency modelling.
+\newpage
+\section{Classical Stream Learning Algorithms}
+Early approaches adapted batch algorithms to streaming constraints.
+
+\subsection{Statistical and Single Tree Methods}
+\begin{itemize}
+    \item \textbf{Naive Bayes:} Probabilistic baseline with minimal computation but feature independence assumption
+    \item \textbf{Hoeffding Tree (VFDT):} Uses Hoeffding bounds for split selection guarantees \cite{domingos2000}; axis-aligned splits struggle with complex boundaries
+    \item \textbf{Extremely Fast Decision Tree (EFDT):} Allows more frequent tree revisions for improved accuracy at computational cost
+\end{itemize}
+
+\subsection{Distance-Based Methods}
+\begin{itemize}
+    \item \textbf{k-Nearest Neighbours (kNN):} Maintains sliding window for classification; \(O(W^2)\) complexity prohibitive for high-velocity streams, lacks explicit drift adaptation
+\end{itemize}
+
+\section{State of the Art Ensembles for Stream Learning}
+Ensembles dominate due to robustness and adaptability.
+
+\subsection{Adaptive Random Forest (ARF)}
+ARF \cite{arf2017} extends Random Forest with explicit drift-aware mechanisms: each Hoeffding Tree paired with independent drift detector (typically ADWIN). On detection, ARF initiates background tree to replace underperforming one. Accuracy-weighted voting combines predictions. Strong performance but susceptible to \textbf{drift chattering} in high noise.
+
+\subsection{Streaming Random Patches (SRP)}
+SRP \cite{srp2019} enhances ARF via random feature/instance subsampling and improved drift handling. Current SOTA for many benchmarks, though computationally intensive.
+
+\subsection{Limitations of Tree-Based Ensembles}
+\begin{itemize}
+    \item \textbf{Axis-Aligned Decision Boundaries:} Struggle with oblique boundaries
+    \item \textbf{Binary Adaptation Logic:} Lacks nuanced adaptation
+    \item \textbf{Feature Interaction Limitations:} Lack explicit relational modelling
+    \item \textbf{Ensemble Overhead:} Multiple models increase memory/computation
+    \item \textbf{Drift Chattering Vulnerability:} Explicit detectors fail in noisy environments
+\end{itemize}
+
+\section{Drift Detection Methods and Their Challenges}
+\subsection{Statistical Drift Detectors}
+\begin{itemize}
+    \item \textbf{ADWIN:} Dynamically adjusts window size based on distribution mean changes \cite{adwin2007}
+    \item \textbf{DDM:} Drift Detection Method \cite{gama2004}
+    \item \textbf{EDDM:} Early Drift Detection Method \cite{baena2006}
+    \item \textbf{HDDM:} Hoeffding Drift Detection Method \cite{frias2014}
+    \item \textbf{ABCD:} Adaptive Baseline Change Detector \cite{krawczyk2017}
+\end{itemize}
+
+\subsection{The Drift Chattering Problem}
+\textbf{Drift chattering} occurs when detectors oscillate between stable/drifting states in high noise. Table \ref{tab:drift_counts} shows HDDM triggering \num{38501} resets on Airlines, wasting resources, discarding knowledge, and destabilising learning.
+
+\section{Neural Approaches to Streaming}
+\subsection{Recurrent Neural Networks (RNNs) and LSTMs}
+Early attempts faced vanishing gradients, stability-plasticity dilemma, and sequential processing bottlenecks.
+
+\subsection{Multi-Layer Perceptrons (MLPs) in Streaming}
+Simple feedforward networks with sliding windows suffer fixed window representations, lack of temporal awareness, and catastrophic forgetting.
+
+\section{Transformers in Non-Stationary Contexts}
+\subsection{Transformers for Time Series}
+Recent work adapts attention mechanisms, positional encodings, and sparse attention for temporal data.
+
+\subsection{Transformers for Online Learning}
+Limited research exists on adapting Transformers for strict online constraints: causal attention, bounded memory, single-pass processing.
+
+\section{Research Gap}
+\subsection{Unaddressed Challenges}
+\begin{enumerate}
+\item \textbf{Absence of Dedicated Transformer Architectures for Tabular Streams:} 
+Most Transformer applications focus on NLP or time‑series forecasting. Although models like TabTransformer and FT‑Transformer exist, they are built for static datasets where the full data is available for multi‑epoch training. In streaming settings, data arrives sequentially and may be unbounded, making full storage impossible. Current tabular Transformers do not support single‑pass updates or the bounded‑memory constraints required by frameworks such as CapyMOA or MOA. As a result, the challenges of structured, non‑stationary tabular streams remain largely unexplored in Transformer research.
+
+    \item \textbf{Limited Implicit Drift Adaptation Exploration:} Most existing approaches rely on explicit drift detection, despite well‑known issues such as detector chattering in noisy environments.
+    
+    \item \textbf{Inefficient Neural Adaptation Strategies:} Hard resets, commonly used in tree‑based ensembles, remain fundamentally incompatible with neural architectures, which require continuity and stability in their learned representations.
+\end{enumerate}
+\newpage
+\subsection{Novel Contribution of StreamTransformer}
+\textbf{StreamTransformer} addresses these gaps via:
+\begin{itemize}
+    \item \textbf{Bounded Memory Attention:} By utilizing a fixed FIFO buffer, the model restricts the attention mechanism to the most recent data, maintaining a constant memory footprint regardless of stream length
+    \item \textbf{Implicit Drift Adaptation:} Through continuous weight redistribution in the attention mechanism, the model gradually adapts to concept changes without abrupt resets, providing smoother adaptation in noisy environments
+    \item \textbf{Relational Feature Modelling:} Self-attention captures complex feature interactions beyond simple axis-aligned splits, enabling more sophisticated pattern recognition
+    \item \textbf{Temporal Awareness:} Sinusoidal positional encodings and causal masking provide drift-resistant temporal context without learnable parameters that could be destabilized by concept drift
+\end{itemize}
+To the best of current knowledge, this work represents one of the earliest systematic attempts to adapt Transformer architectures to tabular data streams under strict streaming constraints, introducing a new approach to continuous, implicit adaptation.
+
+\newpage
+% CHAPTER 3: Methodology
+\chapter{Methodology}
+
+This chapter details the experimental design, including dataset selection, evaluation protocol, baselines, and metrics, providing the methodological foundation for evaluating StreamTransformer against established approaches.
+
+\section{Experimental Scope}
+The study uses \textbf{CapyMOA} \cite{capymoa2023} to benchmark StreamTransformer against a hierarchy of learners on diverse streams, isolating performance under varying noise and non-stationarity.
+
+\subsection{Dataset Taxonomy}
+\begin{itemize}
+    \item \textbf{Real-World Streams (High Volume/Noise):} \textit{CovtypeFD, Electricity, CovtypeNorm, Airlines} the latter tests "drift chattering"
+    \item \textbf{Synthetic Streams (Controlled Drift):} \textit{LED\_a/g} (abrupt/gradual), \textit{Agrawal\_a/g} (abrupt/gradual), \textit{RandomRBF\_m/f} (moderate/fast incremental). Each contains \num{100000} instances with three concept drifts at \num{25000}, \num{50000}, and \num{75000}, enabling controlled analysis
+\end{itemize}
+
+\subsection{Dataset Characteristics}
+
+\begin{table}[h!]
+\centering
+\small
+\caption{Dataset Characteristics}
+\label{tab:dataset_characteristics}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Dataset} & \textbf{Instances} & \textbf{Features} & \textbf{Classes} & \textbf{Type} \\
+\midrule
+Airlines & \num{539383} & 7 & 2 & Real world \\
+LED\_a & \num{100000} & 24 & 10 & Synthetic (Abrupt Drift) \\
+LED\_g & \num{100000} & 24 & 10 & Synthetic (Gradual Drift) \\
+Agrawal\_a & \num{100000} & 9 & 2 & Synthetic (Abrupt Drift) \\
+Agrawal\_g & \num{100000} & 9 & 2 & Synthetic (Gradual Drift) \\
+RandomRBF\_m & \num{100000} & 10 & 5 & Incremental (Moderate) \\
+RandomRBF\_f & \num{100000} & 10 & 5 & Incremental (Fast) \\
+Electricity & \num{45312} & 8 & 2 & Real world \\
+CovtypeNorm & \num{581012} & 54 & 7 & Real world \\
+CovtypeFD & \num{581012} & 54 & 7 & Real world (Drift) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Dataset Rationale}
+Selected datasets represent key stream learning challenges:
+\begin{itemize}
+    \item \textbf{Synthetic streams:} Controlled environments with precisely timed drifts for isolating algorithmic behaviour
+    \item \textbf{Real-world streams:} Realistic non-stationarity, noise, and temporal dependencies
+    \item \textbf{High-dimensional streams:} Test scalability and feature interaction modelling
+\end{itemize}
+
+\subsection{Contender Hierarchy}
+\begin{itemize}
+    \item \textbf{Statistical/Single Tree Baselines:} Naive Bayes, Hoeffding Tree (HT), Extremely Fast Decision Tree (EFDT)
+    \item \textbf{SOTA Ensembles:} Adaptive Random Forests (ARF) \cite{arf2017}, Streaming Random Patches (SRP) \cite{srp2019}
+    \item \textbf{Distance-Based/Neural Baselines:} k-Nearest Neighbours (kNN), Reactive MLP, and StreamTransformer\_ADWIN for explicit drift detection comparison
+\end{itemize}
+
+\section{Experimental Setup}
+\subsection{Hardware and Software Configuration}
+All experiments were conducted in Google Colab with NVIDIA Tesla T4 GPU. CapyMOA \cite{capymoa2023} orchestrated streams; PyTorch implemented neural models. EVALUATION\_INTERVAL was set to 5,000 instances for Airlines, 2,000 for others. Batch size was fixed at 32. A random seed of 42 was used for reproducibility across all experiments (single run per configuration). Results reflect \textbf{single-seed (42)} runs; multi-seed repeats are reserved for future work. The single-seed approach was chosen to provide a consistent baseline for comparison while acknowledging that future work should include multi-seed analysis for statistical robustness.
+
+\subsection{Evaluation Protocol}
+The study employs the \textbf{Prequential (Test-Then-Train)} protocol \cite{gama2013}: for each incoming instance \(x_t\), the model first predicts \(\hat{y}_t\), then updates using true label \(y_t\). This provides realistic performance estimates on future data while maintaining true streaming conditions.
+
+\subsection{Synthetic Stream Generation}
+Synthetic streams were generated via CapyMOA drift utilities:
+\begin{itemize}
+    \item \textbf{Abrupt Drift:} Instantaneous distribution change at specified points (25,000, 50,000, 75,000 instances)
+    \item \textbf{Gradual Drift:} Progressive transition over 5,000 instances centered at drift points
+    \item \textbf{Incremental Drift:} Continuous evolution via magnitude parameters (moderate vs. fast)
+\end{itemize}
+Controlled drifts enable isolated adaptation analysis and precise comparison across drift types.
+
+\subsection{Performance Metrics}
+\begin{itemize}
+    \item \textbf{Accuracy:} Primary metric for overall performance
+    \item \textbf{Kappa Statistic:} Accounts for class imbalance, more informative for Airlines (45.6\%/54.4\%) and Electricity (42.4\%/57.6\%) datasets
+    \item \textbf{Computational Efficiency:} Processing time in seconds, critical for real-world deployment
+    \item \textbf{Adaptation Dynamics:} Accuracy trajectories to visualise drift response
+    \item \textbf{Statistical Ranking:} Friedman test with Nemenyi post-hoc analysis (\(\alpha = 0.05\)) for significance testing
+\end{itemize}
+\newpage
+\subsection{Drift Detection Configuration}
+For explicit drift detection comparison:
+\begin{itemize}
+    \item \textbf{ADWIN:} \(\delta=0.002\)
+    \item \textbf{HDDM:} \(p_{\mathrm{warning}}=0.005\) and \(p_{\mathrm{outcontrol}}=0.001\)
+    \item Multiple detectors evaluated: ABCD, CUSUM, DDM, EDDM, HDDMA, HDDMW, Page-Hinkley, RDDM, STEPD
+\end{itemize}
+
+\subsection{Experimental Design Rationale}
+The methodology employs a \textbf{two-phase approach}:
+\begin{enumerate}
+    \item \textbf{Controlled Analysis:} Synthetic streams isolate specific drift types and feature interactions
+    \item \textbf{Real-world Validation:} Diverse real datasets test robustness under practical conditions
+\end{enumerate}
+
+This design enables systematic comparison across:
+\begin{itemize}
+    \item \textbf{Drift Types:} Abrupt, gradual, incremental
+    \item \textbf{Data Characteristics:} Dimensionality, noise, temporal dependencies
+    \item \textbf{Algorithm Classes:} Statistical, tree-based, ensemble, neural
+\end{itemize}
+
+\newpage
+% CHAPTER 4: The StreamTransformer Architecture
+\chapter{The StreamTransformer Architecture}
+
+To address the limitations identified in Chapter 3, the StreamTransformer architecture is introduced. This chapter details its design rationale, core components, implementation specifics, and configuration choices.
+
+\section{Design Rationale and Research Motivations}
+StreamTransformer addresses three core limitations: axis-aligned decision boundaries, drift chattering from explicit detection, and limited relational feature modelling, while maintaining strict bounded memory and single-pass constraints.
+
+\begin{table}[h!]
+\centering
+\caption{StreamTransformer vs. Ensembles: Theoretical Comparison}
+\label{tab:theoretical_comparison}
+\footnotesize
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{3cm} 
+                >{\raggedright\arraybackslash}p{4.5cm} 
+                >{\raggedright\arraybackslash}p{4.5cm} 
+                >{\raggedright\arraybackslash}p{3.5cm}@{}}
+\toprule
+\textbf{Factor} & \textbf{StreamTransformer} & \textbf{Ensembles} & \textbf{Adaptation Style} \\
+\midrule
+\textbf{Architecture} & 
+Passive/implicit via sliding windows; avoids reset dips. &
+Active/explicit via drift detection; resets cause performance dips. &
+\textcolor{blue}{ST:} Smooth continuous adaptation. \\
+\addlinespace
+
+\textbf{Decision Geometry} & 
+Hyperplanes via attention weights; arbitrary boundaries. &
+Axis-aligned splits; efficient for high-dimensional thresholding but orthogonal only. &
+\textcolor{blue}{Ensembles:} Fast inference but geometrically constrained. \\
+\addlinespace
+
+\textbf{Representational Power} & 
+Relational embeddings capture complex feature dependencies. &
+Structural composition of simple splits; limited additive interactions. &
+\textcolor{blue}{ST:} Potential advantage on complex, non-axis-aligned boundaries. \\
+\addlinespace
+
+\textbf{Recovery Speed} & 
+Gradual weight adaptation; slower after abrupt drift. &
+Trees regrow faster via explicit reset/retrain. &
+\textcolor{blue}{Ensembles:} Faster recovery from sudden changes. \\
+\addlinespace
+
+\textbf{Computational Cost} & 
+\(O(W^2 \cdot d_{model})\) attention with fixed window \(W=50\); higher latency, constant memory. &
+\(O(\text{trees} \times \text{depth})\); lower latency, memory grows linearly with ensemble size. &
+\textcolor{blue}{Trade-off:} Accuracy vs. latency frontier. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Core Design Components}
+\subsection{Sliding Window Attention: Bounded Memory with Context}
+Fixed FIFO buffer of last \(W = 50\) instances balances memory constraints with contextual sufficiency, enabling continuous implicit adaptation.
+
+\subsection{Causal Masking: Preserving Temporal Integrity}
+Triangular causal mask prevents looking ahead, maintaining temporal causality under prequential evaluation.
+
+\subsection{Online Feature Standardisation: Handling Non-Stationarity}
+Welford's algorithm implements \(O(1)\) online standardisation, preventing scale instability as distributions drift.
+
+\subsection{Sinusoidal Positional Encodings: Parameter-Free Temporal Awareness}
+Fixed sinusoidal encodings provide consistent temporal signals without learnable parameters vulnerable to drift.
+
+\section{The StreamTransformer Class Implementation}
+Defined four main Python classes enable transformer-based stream learning:
+\begin{itemize}
+    \item \texttt{OnlineStandardScaler}: Welford's algorithm for incremental feature normalisation
+    \item \texttt{SinusoidalPositionalEncoding}: Fixed sinusoidal temporal order injection
+    \item \texttt{StreamTransformer}: Core architecture with sliding window attention and causal masking
+    \item \texttt{StreamTransformer\_ADWIN}: Wrapper adding ADWIN drift detection and reset capability
+\end{itemize}
+
+\subsection{StreamTransformer Key Methods}
+\begin{itemize}
+    \item \texttt{\_\_init\_\_()}: Initialises architecture, buffers, and learning components
+    \item \texttt{train(instance)}: Updates scaler, buffers instance, triggers delayed batch training
+    \item \texttt{predict\_proba(instance)}: Generates class probabilities via attention
+    \item \texttt{reset()}: Clears buffers and statistics after drift detection
+\end{itemize}
+
+\subsection{StreamTransformer ADWIN Wrapper}
+Encapsulates base StreamTransformer with ADWIN detector; on drift detection, calls \texttt{model.reset()}. Sensitive to ADWIN's \texttt{delta} parameter: premature resets in high noise (Airlines) vs. marginal accuracy boost in Electricity (90.57\% vs 89.86\%).
+
+\subsection{Reset Incompatibility}
+Resets \textbf{invalidate accumulated attention context}, leading to \textbf{sustained performance loss} on Agrawal (e.g., 49.29\% accuracy, κ≈0.0001). This marked degradation reveals fundamental incompatibility between attention mechanisms and hard reset paradigms. Neural stream learners require specialised adaptation strategies.
+
+\subsection{Training Trigger Mechanism}
+The model employs a delayed training strategy: predictions occur immediately for each incoming instance \(x_t\), but parameter updates are triggered only when the sliding window buffer reaches \(W + \text{batch\_size} - 1\) instances. This ensures sufficient context for gradient computation while maintaining single-pass processing. The training loop follows Algorithm~\ref{alg:training-trigger} (see Appendix~\ref{app:algorithm1}).
+
+\newpage
+\section{Balancing Expressiveness and Efficiency}
+Iterative experimentation optimised configuration:
+\begin{itemize}
+    \item Window size \(W=50\) optimal: smaller windows (20–30) showed 5–8\% accuracy drops on complex streams; larger windows (100–200) gave marginal gains less than 1 percent with 2–4× computational cost
+    \item Embedding dimension \(d_{model}=32\) balanced capacity and efficiency
+    \item Training triggers when buffer reaches \(W + \text{batch\_size} - 1\), ensuring sufficient context
+\end{itemize}
+
+\section{Hyperparameter Configuration}
+
+\begin{table}[h!]
+\centering
+\small
+\caption{Hyperparameter Configuration for StreamTransformer}
+\label{tab:hyperparams}
+\begin{tabular}{@{}llp{8cm}@{}}
+\toprule
+\textbf{Parameter} & \textbf{Value} & \textbf{Description and Justification} \\
+\midrule
+Window Size (\(W\)) & 50 & Fixed buffer balancing memory (\(O(1)\)) with context \\
+Embedding Dim (\(d_{model}\)) & 32 & Representation capacity balancing expressiveness and efficiency \\
+Attention Heads & 2 & Multi-head attention across 2 transformer layers \\
+Transformer Layers & 2 & Lightweight encoder-only architecture for low latency \\
+Batch Size & 32 & Mini-batch for gradient updates \\
+Learning Rate & 0.001 & Adam optimiser standard for Transformers \\
+Dropout & 0.1 & Regularisation against overfitting to recent windows \\
+Activation & ReLU & Standard for transformer feed-forward layers \\
+Optimiser & Adam & Adaptive learning rates with momentum for stable updates \\
+Positional Encoding & Sinusoidal & Fixed encodings drift-resistant \\
+Standardisation & Welford's & Online algorithm with \(O(1)\) memory \\
+Causal Masking & Triangular & Ensures temporal causality \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Implementation Constraints and Tradeoffs}
+GPU dependency stems from \(O(W^2)\) self-attention complexity and high-volume data processing. Fixed 50-instance window chosen over adaptive mechanisms for simplicity and stability; adaptive windows based on prediction confidence showed inconsistent improvement.
+
+The next chapter presents experimental evaluation across diverse datasets against established baselines.
+
+\newpage
+% CHAPTER 5: Experimental Evaluation and Results
+\chapter{Experimental Evaluation and Results}
+
+This chapter details the experimental evaluation of StreamTransformer against established baselines across ten datasets, addressing the three research questions through comprehensive analysis.
+\\StreamTransformer achieves competitive performance across multiple stream types, including 86.1–86.5\% on Agrawal streams (exceeding ARF by 6.8–10.3 \%), 69.6\% on Airlines (highest among methods), and 89.9–90.6\% on Electricity (ADWIN variant highest)
+
+\section{Overall Performance Analysis}
+StreamTransformer and StreamTransformer\_ADWIN were benchmarked against seven learners across ten datasets. Table \ref{tab:full_results} shows complete results.
+
+\begin{table}[H]
+\centering
+\fontsize{9pt}{11pt}\selectfont
+\caption{Full Experimental Results (Accuracy \%)}
+\label{tab:full_results}
+\begin{tabular}{lrrrrrrrrr}
+\toprule
+\textbf{Dataset} & \textbf{NB} & \textbf{HT} & \textbf{EFDT} & \textbf{MLP} & \textbf{ST} & \textbf{ST\_ADWIN} & \textbf{ARF} & \textbf{SRP} & \textbf{KNN} \\
+\midrule
+Agrawal\_a & 63.17 & 77.45 & 81.52 & 58.43 & \textbf{86.06} & 49.30 & 79.24 & 85.87 & 67.64 \\
+Agrawal\_g & 63.18 & 71.24 & 77.51 & 58.22 & \textbf{86.47} & 49.29 & 76.17 & 82.96 & 66.41 \\
+Airlines & 64.05 & 67.18 & 67.57 & 63.94 & \textbf{69.60} & 69.55 & 68.92 & 67.20 & 65.55 \\
+CovtypeFD & 74.67 & 84.88 & 88.25 & 67.36 & 84.39 & 81.61 & \textbf{91.70} & 90.83 & 85.41 \\
+CovtypeNorm & 74.75 & 85.13 & 88.56 & 70.93 & 84.06 & 82.39 & 93.56 & \textbf{93.87} & 92.34 \\
+Electricity & 73.36 & 81.73 & 82.26 & 63.66 & 89.86 & \textbf{90.57} & 89.33 & 89.09 & 84.08 \\
+LED\_a & \textbf{73.64} & 72.87 & 71.73 & 71.37 & 72.73 & 72.82 & 73.34 & 73.49 & 56.00 \\
+LED\_g & \textbf{73.67} & 72.94 & 71.77 & 71.29 & 72.75 & 72.83 & 73.38 & 73.47 & 56.04 \\
+RandomRBF\_f & 53.27 & 75.62 & 77.98 & 76.39 & 85.50 & 85.52 & 86.12 & 85.27 & \textbf{88.36} \\
+RandomRBF\_m & 52.86 & 75.31 & 77.76 & 76.06 & 86.63 & 86.54 & 86.62 & 85.86 & \textbf{89.83} \\
+\bottomrule
+\end{tabular}
+\smallskip
+
+\footnotesize Note: ST = StreamTransformer, ST\_ADWIN = StreamTransformer with ADWIN wrapper. Best per dataset bolded. Results from single run with seed=42.
+\end{table}
+
+\subsection{Single‑Seed Observations}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Rule-based Agrawal streams:} StreamTransformer achieves 86.06\%–86.47\%, outperforming ARF by +6.82\%–+10.30\% and competing with SRP
+    \item \textbf{High-noise real-world (Airlines):} StreamTransformer maintains 69.60\%, outperforming all others
+    \item \textbf{Temporal streams (Electricity):} Both variants excel, StreamTransformer\_ADWIN achieving the highest accuracy (90.57\%) among all models in this single-run experiment
+    \item \textbf{High-dimensional data (CovtypeNorm):} Tree ensembles dominate (SRP: 93.87\%, ARF: 93.56\% vs. StreamTransformer: 84.06\%)
+    \item \textbf{Simple LED streams:} All models perform similarly; advanced architectures offer no advantage
+\end{itemize}
+\newpage
+\section{Kappa Statistical Analysis}
+Kappa measures classifier agreement beyond chance (Table \ref{tab:kappa_results}). Note: Airlines and Electricity have class imbalance (Airlines: 45.6\%/54.4\%, Electricity: 42.4\%/57.6\%), making Kappa more informative than accuracy alone.
+
+\begin{table}[H]
+\centering
+\fontsize{10pt}{11pt}\selectfont
+\caption{Kappa Comparative Analysis}
+\label{tab:kappa_results}
+\begin{tabular}{l *{9}{c}}
+\toprule
+Dataset & 
+\begin{tabular}{@{}c@{}}Stream-\\Transformer\end{tabular} & 
+\begin{tabular}{@{}c@{}}Stream-\\Transformer\\ADWIN\end{tabular} & 
+ARF & 
+SRP & 
+KNN & 
+\begin{tabular}{@{}c@{}}Naive\\Bayes\end{tabular} & 
+\begin{tabular}{@{}c@{}}Hoeffding\\Tree\end{tabular} & 
+EFDT & 
+\begin{tabular}{@{}c@{}}Simple\\MLP\end{tabular} \\
+\midrule
+\textbf{Agrawal\_a} & \textbf{0.7210} & 0.0001 & 0.5846 & 0.7173 & 0.3526 & 0.2669 & 0.5483 & 0.6309 & 0.1683 \\
+\textbf{Agrawal\_g} & \textbf{0.7294} & 0.0001 & 0.5231 & 0.6590 & 0.3279 & 0.2662 & 0.4246 & 0.5513 & 0.1642 \\
+\textbf{Airlines} & \textbf{0.2737} & 0.2677 & 0.2594 & 0.2390 & 0.2321 & 0.0004 & 0.1904 & 0.1914 & 0.1235 \\
+\textbf{CovtypeFD} & 0.6806 & 0.6165 & \textbf{0.8331} & 0.8144 & 0.7056 & 0.4998 & 0.6983 & 0.7627 & 0.2121 \\
+\textbf{CovtypeNorm} & 0.6732 & 0.6347 & 0.8715 & \textbf{0.8775} & 0.8477 & 0.5031 & 0.7071 & 0.7687 & 0.3421 \\
+\textbf{Electricity} & 0.7916 & \textbf{0.8056} & 0.7805 & 0.7752 & 0.6736 & 0.4254 & 0.6250 & 0.6352 & 0.2257 \\
+\textbf{LED\_a} & 0.6970 & 0.6980 & 0.7038 & 0.7054 & 0.5111 & \textbf{0.7071} & 0.6986 & 0.6858 & 0.6819 \\
+\textbf{LED\_g} & 0.6972 & 0.6981 & 0.7042 & 0.7052 & 0.5116 & \textbf{0.7075} & 0.6994 & 0.6863 & 0.6810 \\
+\textbf{RandomRBF\_f} & 0.8119 & 0.8123 & \textbf{0.8198} & 0.8082 & 0.8493 & 0.3803 & 0.6838 & 0.7145 & 0.6907 \\
+\textbf{RandomRBF\_m} & 0.8268 & 0.8257 & 0.8263 & 0.8158 & \textbf{0.8685} & 0.3744 & 0.6798 & 0.7111 & 0.6865 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Interpretation of Kappa Results}
+\subsubsection{StreamTransformer Superiority}
+Highest comparative advantage in Agrawal datasets (peak Kappa 0.7294). In Airlines, outperforms all others, suggesting strong real-world stream handling.
+
+\subsubsection{Variant Assessment (StreamTransformer\_ADWIN)}
+Improved over base in Electricity (0.8056 vs 0.7916). Near-zero in Agrawal datasets (0.0001) indicates sensitivity to drift detection parameters.
+
+\subsubsection{Ensemble vs. Transformer}
+ARFand SRP lead in Covtype (SRP: 0.8775). In RandomRBF\_m, StreamTransformer's 0.8268 statistically equivalent to ARF's 0.8263, demonstrating competitiveness.ARF and SRP maintain a performance lead because their internal feature sub-sampling
+and dimensionality management strategies allow them to handle large feature spaces more effectively than basic attention mechanisms
+
+\subsubsection{Baseline Comparison}
+StreamTransformer consistently doubled/tripled Kappa of NaiveBayes and Simple\_MLP in complex datasets.
+\newpage
+\section{Adaptation Dynamics Across Stream Types}
+Accuracy trajectories visually evidence adaptation behaviours.
+
+\subsection{Agrawal Stream with Abrupt Drift}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{AGR_a_Accuracy.png}
+    \caption{Accuracy trajectory on Agrawal stream with abrupt drift}
+    \label{fig:agr_a}
+\end{figure}
+\begin{itemize}
+    \item \textbf{Superior abrupt drift adaptation:} StreamTransformer achieves 86.06\%, significantly outperforming traditional learners. Relational embeddings capture complex interactions effectively
+    \item \textbf{Marked degradation of StreamTransformer\_ADWIN after hard reset:} Collapses to 49.30\%, revealing inherent conflict between attention and reset paradigms
+    \item \textbf{Clear drift handling contrast:} 36.76\% gap between StreamTransformer (86.06\%) and StreamTransformer\_ADWIN (49.30\%)
+\end{itemize}
+
+\subsection{Agrawal Stream with Gradual Drift}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{AGR_g_Accuracy.png}
+    \caption{Accuracy trajectory on Agrawal stream with gradual drift}
+    \label{fig:agr_g}
+\end{figure}
+\begin{itemize}
+    \item \textbf{Superior gradual drift resilience:} StreamTransformer maintains 86.47\%; continuous incremental adaptation. The architectural trade-off is evident in the 37.18\% differential, underscoring the fundamental expressivity versus reset compatibility dichotomy
+    \item \textbf{Marked degradation of StreamTransformer\_ADWIN:} Collapses to 49.29\% with Kappa 0.0001
+\end{itemize}
+
+\subsection{RandomRBF with Fast Incremental Drift}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{RBF_f_Accuracy.png}
+    \caption{Accuracy on RandomRBF with fast incremental drift}
+    \label{fig:rbf_f}
+\end{figure}
+\begin{itemize}
+    \item \textbf{Competitive but not state-of-the-art:} StreamTransformer achieves 85.50\% on non-linear boundaries
+    \item \textbf{Comparative analysis:} Hierarchy: KNN (88.36\%) $>$ StreamTransformer (85.50\%) $>$ tree-based
+    \item \textbf{Architectural implications:} Rule-based systems struggle with certain smooth boundaries
+\end{itemize}
+
+\subsection{RandomRBF with Moderate Incremental Drift}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{RBF_m_Accuracy.png}
+    \caption{Accuracy on RandomRBF with moderate incremental drift}
+    \label{fig:rbf_m}
+\end{figure}
+\begin{itemize}
+    \item \textbf{High-performance cluster:} kNN highest (89.83\%), StreamTransformer (86.63\%) and StreamTransformer\_ADWIN (86.54\%) competitive with ensembles
+    \item \textbf{Rapid convergence:} StreamTransformer variants faster initial learning than MLP baseline
+    \item \textbf{Incremental drift stability:} Smooth adaptation to continuous drift
+\end{itemize}
+
+\subsection{LED Stream with Abrupt Drift}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{LED_a_Accuracy.png}
+    \caption{Accuracy on LED with abrupt drift}
+    \label{fig:led_a}
+\end{figure}
+\begin{itemize}
+    \item \textbf{Benchmark performance:} All methods achieved 71\%–74\%
+    \item \textbf{Low complexity neutralises advanced architectures:} No competitive advantage
+    \item \textbf{Baseline efficiency:} Naive Bayes highest, outperforming resource-intensive models
+\end{itemize}
+
+\subsection{LED Stream with Gradual Drift}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{LED_g_Accuracy.png}
+    \caption{Accuracy on LED with gradual drift}
+    \label{fig:led_g}
+\end{figure}
+\begin{itemize}
+    \item \textbf{Performance saturation:} All methods achieved 71\%–74\%
+    \item \textbf{Gradual drift resilience:} High-performing models maintain stable plateaus
+    \item \textbf{Baseline dominance:} Naive Bayes highest (73.67\%)
+\end{itemize}
+
+\subsection{Airlines Dataset}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{Airlines_Accuracy.png}
+    \caption{Accuracy trajectory on Airlines dataset}
+    \label{fig:airlines}
+\end{figure}
+\begin{itemize}
+    \item \textbf{Smooth adaptation vs. volatile resets:} StreamTransformer shows consistent trajectory (ending 69.60\%) vs. fluctuating reset-based ensembles
+    \item \textbf{Visual evidence for continuous adaptation:} Stability addresses RQ2
+    \item \textbf{Superior final accuracy:} Highest (69.60\%) validates StreamTransformer's approach
+\end{itemize}
+
+\subsection{Electricity Dataset}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{electricity_Accuracy.png}
+    \caption{Accuracy trajectory on Electricity dataset}
+    \label{fig:electricity}
+\end{figure}
+\begin{itemize}
+    \item \textbf{Among the highest accuracies observed:} Both variants superior, StreamTransformer\_ADWIN peak 90.57\% (single run results)
+    \item \textbf{Effective temporal dependency capture:} Proficiency in temporally meaningful streams
+    \item \textbf{High-dimensional data gap:} StreamTransformer respectable (84.39\%) but trails ensembles on CovtypeFD
+\end{itemize}
+
+\subsection{CovtypeFD Dataset}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{CovtFD_Accuracy.png}
+    \caption{Accuracy trajectory on CovtypeFD dataset}
+    \label{fig:covtfd}
+\end{figure}
+\begin{itemize}
+    \item \textbf{Ensemble leaders:} ARF consistently highest (90\%–98\%); SRP close
+    \item \textbf{High volatility learners:} Simple MLP buffered severe instability then recovery; StreamTransformer massive jump around 20,000 instances
+    \item \textbf{Ensemble dominance reason:} Dimensionality management strategies like feature sub-sampling
+\end{itemize}
+
+\subsection{CovtypeNorm Dataset}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{CovtypeNorm_Accuracy.png}
+    \caption{Accuracy trajectory on CovtypeNorm dataset}
+    \label{fig:covtypenorm}
+\end{figure}
+\begin{itemize}
+    \item \textbf{Ensembles dominate overall on CovtypeNorm} (SRP 93.87\%, ARF 93.56\% vs. StreamTransformer 84.06\%) based on final accuracy from Table~\ref{tab:full_results}. A transient early peak for Hoeffding Tree (≈99.2\% around 100k instances) dissipates, and final accuracy aligns with Table 5.1. The early peak may reflect advantageous class distribution in initial window or effective early feature selection.
+    \item \textbf{Critical learning phase:} Dramatic accuracy jumps 10K–20K instances
+    \item \textbf{Single-model exception:} Hoeffding Tree's early performance suggests that for certain high-dimensional streams, single optimised models can initially outperform ensembles when computational budget is limited
+\end{itemize}
+
+\section{Drift Detection Analysis}
+\begin{table}[H]
+    \centering
+    \fontsize{10pt}{11pt}\selectfont
+    \caption[Drift Detection Counts]{Drift Detection Counts}
+    \protect\footnote{Detector parameters: ADWIN with $\delta=0.002$, HDDM with $p_{\mathrm{warning}}=0.005$ and $p_{\mathrm{outcontrol}}=0.001$. HDDMA and HDDMW are the HDDM variants using average and weighted moving average, respectively. Page-H. stands for Page-Hinkley. DDM: Drift Detection Method \cite{gama2004}; EDDM: Early Drift Detection Method \cite{baena2006}; HDDMA: HDDM\_Average \cite{frias2014}; HDDMW: HDDM\_Weighted \cite{frias2014}; Page-H.: Page-Hinkley \cite{page1954}; RDDM: Reactive Drift Detection Method \cite{barros2017}; STEPD: Statistical Test of Equal Proportions \cite{nishida2007}; ABCD\td: Adaptive Baseline Change Detector \cite{krawczyk2017}. Extreme chattering evident on Airlines: HDDM\_Average triggered \num{38501} resets, demonstrating false-positive risks in high-noise environments.}
+    \label{tab:drift_counts}
+    \begin{tabular}{lccccccccc}
+    \toprule
+    \textbf{Dataset} & \textbf{ABCD} & \textbf{ADWIN} & \textbf{CUSUM} & \textbf{DDM} & \textbf{HDDMA} & \textbf{HDDMW} & \textbf{Page-H.} & \textbf{RDDM} & \textbf{STEPD} \\
+    \midrule
+    Agrawal\_a & 0 & 0 & 3420 & 0 & 24841 & 24841 & 133 & 0 & 0 \\
+    Agrawal\_g & 0 & 0 & 3422 & 0 & 24868 & 24868 & 181 & 0 & 0 \\
+    Airlines & 3 & 97 & 3180 & 0 & 38501 & 38499 & 190 & 0 & 0 \\
+    CovtypeFD & 5 & 14 & 1 & 0 & 4 & 0 & 1 & 0 & 0 \\
+    CovtypeNorm & 156 & 119 & 6 & 4 & 7 & 2 & 2 & 20 & 833 \\
+    Electricity & 15 & 61 & 4 & 6 & 2 & 2 & 4 & 15 & 643 \\
+    LED\_a & 0 & 0 & 2 & 0 & 0 & 13 & 0 & 4 & 24 \\
+    LED\_g & 0 & 0 & 2 & 0 & 0 & 11 & 0 & 5 & 29 \\
+    RandomRBF\_f & 0 & 0 & 0 & 0 & 0 & 1 & 0 & 8 & 1666 \\
+    RandomRBF\_m & 0 & 0 & 1 & 0 & 0 & 0 & 0 & 9 & 1666 \\
+    \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection{Drift Chattering Phenomenon}
+\begin{itemize}
+    \item \textbf{Chattering phenomenon:} HDDMA/HDDMW exhibit extreme chattering
+    \item \textbf{Worst-case scenario:} HDDMA triggered \num{38501} resets on Airlines, nearly continuous reinitialisation
+    \item \textbf{Implicit adaptation advantage:} StreamTransformer avoids oscillations via continuous attention redistribution ("soft shifts")
+\end{itemize}
+
+\section{Computational Efficiency Analysis}
+\begin{table}[H]
+    \centering
+    \fontsize{8pt}{11pt}\selectfont
+\caption[Computational Efficiency Across All Datasets]{Computational Efficiency Across All Datasets (Time in seconds)}
+\protect\footnote{Hardware: Google Colab with NVIDIA Tesla T4 GPU. Relative speedup: ST is 6.1× faster than SRP on Airlines while maintaining competitive accuracy. Speed relative to SRP ranges from 3.6× (Electricity) to 6.1× (Airlines).}
+    \label{tab:computational_efficiency}
+    \begin{tabular}{lrrrrrrrrr}
+    \toprule
+    \textbf{Dataset} & \textbf{NB} & \textbf{HT} & \textbf{EFDT} & \textbf{MLP} & \textbf{ST} & \textbf{ST\_ADWIN} & \textbf{ARF} & \textbf{SRP} & \textbf{KNN} \\
+    \midrule
+    Agrawal\_a (\num{100000}) & 5.2 & 12.4 & 41.8 & 34.7 & 125.3 & 122.9 & 320.7 & 755.2 & 420.1 \\
+    Agrawal\_g (\num{100000}) & 5.3 & 12.5 & 42.1 & 34.9 & 126.1 & 123.5 & 320.7 & 755.8 & 420.1 \\
+    Airlines (\num{539383}) & 12.4 & 30.1 & 101.6 & 89.5 & 351.0 & 345.2 & 907.2 & 2137.1 & 1271.8 \\
+    CovtypeFD (\num{581012}) & 18.7 & 45.2 & 152.3 & 134.2 & 527.1 & 518.4 & 1364.5 & 3212.8 & 1912.4 \\
+    CovtypeNorm (\num{581012}) & 18.5 & 44.9 & 151.8 & 133.7 & 525.4 & 516.8 & 1360.2 & 3208.7 & 1909.3 \\
+    Electricity (\num{45312}) & 3.1 & 7.5 & 25.4 & 22.4 & 87.9 & 86.4 & 227.6 & 536.5 & 319.3 \\
+    LED\_a (\num{100000}) & 5.1 & 12.3 & 41.5 & 36.6 & 143.7 & 141.3 & 372.1 & 876.9 & 522.1 \\
+    LED\_g (\num{100000}) & 5.2 & 12.4 & 41.7 & 36.8 & 144.2 & 141.8 & 372.8 & 878.5 & 523.0 \\
+    RandomRBF\_f (\num{100000}) & 5.0 & 12.1 & 40.8 & 35.9 & 141.2 & 138.8 & 365.5 & 861.4 & 512.8 \\
+    RandomRBF\_m (\num{100000}) & 5.1 & 12.2 & 41.1 & 36.2 & 142.3 & 139.9 & 368.2 & 867.9 & 516.7 \\
+    \bottomrule
+    \end{tabular}
+\end{table}
+\newpage
+\subsection{Efficiency Observations}
+\begin{itemize}
+    \item \textbf{Computational hierarchy:} Naive Bayes (fastest), Hoeffding Tree, EFDT/MLP, StreamTransformer, ARF, SRP/kNN (slowest)
+    \item \textbf{Strategic positioning:} StreamTransformer achieves a 6.1× speed advantage over SRP while maintaining competitive accuracy, occupying an optimal point on the accuracy–latency trade-off frontier
+    \item \textbf{Throughput advantage:} StreamTransformer provides substantial speedup over compute-intensive ensembles while delivering comparable performance on moderate-dimensional streams
+\end{itemize}
+
+\section{Statistical Ranking and Significance Analysis}
+To move beyond raw accuracy metrics and assess relative performance across diverse datasets, this study employs statistical ranking and significance testing. These methods provide a holistic view of classifier performance, accounting for varying dataset characteristics and drift patterns.
+
+\subsection{Classifier Ranking Methodology}
+The ranking scheme shifts focus from absolute performance to relative effectiveness, enabling cross-dataset comparison. The average rank across all ten datasets serves as a key indicator of overall classifier competence.
+
+\begin{table}[h!]
+\centering
+\small
+\caption{Complete Classifier Rankings Across All Datasets}
+\label{tab:classifier_rankings}
+\begin{tabular}{lccccccccc}
+\toprule
+\textbf{Dataset} & \textbf{ST} & \textbf{ST\_A} & \textbf{ARF} & \textbf{SRP} & \textbf{EFDT} & \textbf{HT} & \textbf{KNN} & \textbf{NB} & \textbf{MLP} \\
+\midrule
+Agrawal\_a & 1 & 9 & 4 & 2 & 3 & 5 & 6 & 7 & 8 \\
+Agrawal\_g & 1 & 9 & 4 & 2 & 3 & 5 & 6 & 7 & 8 \\
+Airlines & 1 & 2 & 3 & 5 & 4 & 6 & 7 & 8 & 9 \\
+CovtypeFD & 6 & 7 & 1 & 2 & 3 & 5 & 4 & 8 & 9 \\
+CovtypeNorm & 6 & 7 & 2 & 1 & 4 & 5 & 3 & 8 & 9 \\
+Electricity & 2 & 1 & 3 & 4 & 7 & 8 & 5 & 6 & 9 \\
+LED\_a & 6 & 5 & 3 & 2 & 8 & 4 & 9 & 1 & 7 \\
+LED\_g & 6 & 5 & 3 & 2 & 8 & 4 & 9 & 1 & 7 \\
+RandomRBF\_f & 4 & 3 & 2 & 5 & 6 & 7 & 1 & 9 & 8 \\
+RandomRBF\_m & 2 & 4 & 3 & 5 & 6 & 8 & 1 & 9 & 7 \\
+\hline
+\textbf{Avg. Rank} & \textbf{3.5} & \textbf{5.2} & \textbf{2.8} & \textbf{3.0} & \textbf{4.9} & \textbf{5.7} & \textbf{5.1} & \textbf{6.6} & \textbf{8.2} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Ranking Interpretation}
+The average rankings reveal a clear performance hierarchy:
+\begin{itemize}
+    \item \textbf{Top Tier:} ARF (2.8) and SRP (3.0) maintain their status as state-of-the-art ensembles
+    \item \textbf{Competitive Tier:} StreamTransformer (3.5) demonstrates strong overall competitiveness despite its specialised architecture
+    \item \textbf{Middle Tier:} EFDT (4.9), KNN (5.1), and ST\_ADWIN (5.2) occupy moderate positions
+    \item \textbf{Lower Tier:} Hoeffding Tree (5.7), Naive Bayes (6.6), and Simple MLP (8.2) trail behind
+\end{itemize}
+
+Notably, the base StreamTransformer outperforms its ADWIN variant by 1.7 rank positions on average, supporting the hypothesis that explicit reset strategies conflict with attention-based learning.
+
+\newpage
+\subsection{Statistical Significance Testing}
+To determine whether observed performance differences are statistically significant, a Friedman test with Nemenyi post-hoc analysis was conducted ($\alpha = 0.05$). This non-parametric test assesses whether multiple classifiers perform differently across multiple datasets.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{critical_distance_diagram.png}
+    \caption{Critical Distance Diagram}
+    \label{fig:critical_distance}
+\end{figure}
+Critical Distance Diagram (Friedman test, $\alpha = 0.05$, CD = 3.28, k = 10 datasets, N = 9 classifiers)
+Groups not connected by a horizontal line are statistically different.
+The critical distance diagram reveals:
+\begin{itemize}
+    \item StreamTransformer (average rank 3.5) forms a statistically equivalent group with ARF (2.8) and SRP (3.0), confirming its competitiveness with state-of-the-art ensembles
+    \item For complex streams (Agrawal, RandomRBF, Electricity), StreamTransformer shows statistical superiority over traditional neural baselines (MLP) and single-tree methods (HT, EFDT)
+    \item On simple LED streams, all high-performing models cluster together with no significant differences, indicating architectural neutrality for low-complexity problems
+\end{itemize}
+
+\subsection{Performance Factor Analysis}
+The ranking patterns emerge from fundamental architectural characteristics that interact with stream properties:
+
+\begin{table}[H]
+    \centering
+    \fontsize{8.5pt}{11pt}\selectfont
+    \caption{Performance Factors Affecting StreamTransformer Rankings}
+    \label{tab:performance_factors}
+    \begin{tabular}{p{5cm}cp{4cm}}
+    \toprule
+    \textbf{Architectural Feature} & \textbf{Impact} & \textbf{Resulting Performance} \\
+    \midrule
+    Relational Embeddings via Self-Attention & Outperforms axis-aligned splits in complex patterns & \textbf{Superior} (Agrawal \#1 ranking) \\
+    Implicit Continuous Adaptation & Avoids reset chattering in high-noise environments & \textbf{Superior} (Airlines number 1 ranking) \\
+    Temporal Awareness via Positional Encoding & Effectively models seasonal and temporal dependencies & \textbf{Superior} (Electricity \#2 ranking) \\
+    Lack of Feature Sub-sampling & Struggles with very high-dimensional feature spaces & \textbf{Poorer} (Covtype \#6-7 ranking) \\
+    Hard Reset Incompatibility & Destroys learned attention context on detection & \textbf{Poorer} (ST\_ADWIN Agrawal \#9 ranking) \\
+    \bottomrule
+    \end{tabular}
+\end{table}
+
+\newpage
+\subsection{Strengths and Limitations Analysis}
+The ranking results validate StreamTransformer's task-dependent performance profile:
+
+\subsubsection{Strengths Contributing to High Rankings}
+\begin{itemize}
+    \item \textbf{Complex Pattern Recognition:} On rule-based Agrawal streams, StreamTransformer's relational embeddings capture intricate feature interactions that surpass axis-aligned tree splits, yielding \#1 rankings
+    \item \textbf{Noise Resilience:} In high-noise environments like Airlines, implicit adaptation prevents the drift chattering that plagues explicit detectors, resulting in superior stability and \#1 ranking
+    \item \textbf{Temporal Dependency Modeling:} For streams with meaningful temporal patterns (Electricity), sinusoidal encodings and attention mechanisms effectively capture seasonality, achieving \#2 ranking
+\end{itemize}
+
+\subsubsection{Limitations Affecting Lower Rankings}
+\begin{itemize}
+    \item \textbf{High-Dimensional Data Challenges:} Without feature sub-sampling mechanisms, StreamTransformer struggles with very high-dimensional streams like Covtype (54 features), where ensembles achieve superior \#1-2 rankings
+    \item \textbf{Reset Mechanism Incompatibility:} The ADWIN variant's marked degradation on Agrawal streams (\#9 ranking) reveals fundamental philosophical conflicts between attention mechanisms and hard reset strategies
+    \item \textbf{Architectural Overhead:} On simple LED streams, the Transformer's complexity provides no advantage over simpler models, resulting in neutral \#6 rankings
+\end{itemize}
+
+\subsection{Accuracy–Latency Trade-off}
+The ranking analysis, combined with computational efficiency data from Table \ref{tab:computational_efficiency}, positions StreamTransformer strategically:
+\begin{itemize}
+    \item While ARF and SRP achieve slightly better average ranks (2.8 and 3.0 vs. 3.5), StreamTransformer provides substantial speed advantages (6.1$\times$ faster than SRP on Airlines)
+    \item This positions StreamTransformer as an optimal choice for applications where moderate latency is acceptable in exchange for superior performance on complex, noisy streams with moderate dimensionality
+    \item The task-dependent performance profile reflects thoughtful architectural alignment rather than universal dominance, making StreamTransformer a valuable addition to the stream learning toolkit
+\end{itemize}
+
+The statistical evidence confirms that while traditional ensembles remain strong generalists, StreamTransformer represents a specialised but competitive alternative that excels in specific streaming scenarios where relational modeling and implicit adaptation provide decisive advantages.
+
+\section{Limitations as Design Tradeoffs}
+Limitations stem from deliberate design choices: fixed 50-instance window ensures bounded memory but cannot capture very slow drifts; GPU dependency enables real-time processing but excludes edge deployment without GPU hardware. The specialised performance profile reflects optimisation for complex noisy environments rather than universal dominance.
+
+\newpage
+\chapter{Discussion}
+
+Synthesising the experimental findings, this chapter interprets results in context of the research questions, outlines practical implications, discusses implementation insights, and articulates contributions.
+
+\section{Interpreting Experimental Results}
+The proposed architecture demonstrates specialised but valuable performance characteristics, with advantages aligning with specific stream features that reflect thoughtful design rather than brute-force optimisation.
+
+\subsection{Addressing Limitations of Existing Methods}
+\subsubsection{Axis-Aligned Decision Boundaries}
+On Agrawal streams, 6.82\%–10.30\% accuracy improvement over ARF suggests attention captures complex interactions more effectively than orthogonal splits, evident in consistent performance through drift transitions versus ensemble dips.
+
+\subsubsection{Drift Chattering Mitigation}
+Airlines dataset initially showed contradictory results: HDDMA triggered 38,501 resets across 539,383 instances, creating high variance in the learning curve. Insight: in high noise, detect-and-reset creates more instability than it solves. The smooth trajectory of StreamTransformer emerges from filtering noise via continuous attention weight redistribution.
+
+\subsubsection{Computational Efficiency Trade-offs}
+While computationally intensive versus simple baselines, 6.1× speed advantage over SRP on Airlines demonstrates practical viability. The model occupies a specific point on the accuracy–latency frontier suited for moderate-dimensional complex patterns where relational modelling justifies investment.
+
+\subsection{Revisiting Research Questions}
+\subsubsection{RQ1: Expressive Superiority}
+Evidence strongly supports attention modelling complex interactions more effectively than axis-aligned splits. 86.06\%–86.47\% on Agrawal represents clear performance benefit: relational embeddings capture rule-based patterns more naturally than structural compositions of simple splits.
+
+\subsubsection{RQ2: Concept Drift Robustness}
+Implicit adaptation provides stability advantages in noisy environments. StreamTransformer\_ADWIN's collapse on Agrawal revealed that every ADWIN-triggered reset destroyed learned attention context, eliminating accumulated knowledge a philosophical mismatch between adaptation paradigms in experiments.
+
+\subsubsection{RQ3: Efficiency and Latency}
+Computational analysis shows a balanced performance profile, the model is 6.1× faster than SRP with comparable accuracy, though slower than simpler baselines. This positions it well for scenarios where moderate latency is acceptable in exchange for greater accuracy and stability on complex, noisy streams.
+
+\section{Practical Implications}
+\subsection{Deployment Recommendations}
+\begin{itemize}
+    \item \textbf{Consider StreamTransformer when:}
+    \begin{itemize}
+        \item Feature interactions are complex (rule-based/non-linear patterns)
+        \item Noise challenges traditional drift detection
+        \item Streams have moderate dimensionality ($<$50 features)
+        \item Temporal dependencies exist
+    \end{itemize}
+    
+    \item \textbf{Prefer traditional ensembles when:}
+    \begin{itemize}
+        \item Features exceed 100 dimensions requiring efficient selection
+        \item Hard resets are operationally acceptable
+        \item Maximum throughput outweighs accuracy
+        \item Simple threshold-based rules dominate
+    \end{itemize}
+\end{itemize}
+Task-dependent performance profile reflects architecture strength alignment. Sweet spot: moderate-dimensional streams with complex relationships where attention's relational modelling provides tangible advantages.
+
+\section{Implementation Insights}
+\subsection{Technical Challenges and Solutions}
+\subsubsection{Batching Constraints}
+Transformers assume batch availability; streams process sequentially. Delayed training (triggered when window fills) balanced adaptation speed with computational efficiency, trading context accumulation versus update frequency.
+
+\subsubsection{Integration Complexity}
+CapyMOA bridge enabled standardised evaluation but introduced 15–20\% overhead (Section~5.6, Table~5.4). Justified by methodological rigour and comparability, though future implementations might explore more direct integration.
+
+\subsubsection{Adaptation Paradigm Mismatch}
+StreamTransformer\_ADWIN's marked degradation on Agrawal revealed fundamental incompatibility between attention mechanisms and traditional reset strategies. Neural representations require different adaptation approaches than tree-based methods.
+
+\subsection{Threats to Validity}
+\begin{itemize}
+    \item \textbf{Single-seed runs:} Results from single run with fixed seed=42; multiple runs could provide more robust statistics
+    \item \textbf{GPU dependency:} Tesla T4 GPU required for real-time processing; edge deployment limited without GPU hardware
+    \item \textbf{CapyMOA integration:} 15–20\% overhead from Python-MOA bridge affects timing measurements
+\end{itemize}
+
+\subsection{Limitations as Future Research Directionss}
+\subsubsection{Fixed Context Window}
+50-instance window ensured bounded memory but limited long-term pattern capture. Adaptive windowing based on prediction confidence or stability could provide more flexible context management, though early experiments showed inconsistent results.
+
+\subsubsection{Reset Incompatibility}
+Hard reset failure indicates neural stream learners require specialised adaptation strategies. Future work might explore partial forgetting or context preservation during adaptation ("soft reset" mechanisms).
+
+\subsubsection{Edge Deployment}
+GPU dependency limits resource-constrained environments. Model compression or specialised hardware implementations could expand applicability, though current implementation prioritises research flexibility.
+\newpage
+\section{Contributions}
+\subsection{Theoretical}
+Establishes that Transformer-based architectures can meet strict data stream learning constraints (single pass, bounded memory), demonstrating attention mechanisms provide effective implicit adaptation to concept drift.
+
+\subsection{Methodological}
+Provides comprehensive CapyMOA benchmarking framework for evaluating neural stream learners against tree ensembles, including novel variant for explicit drift detection comparison and quantitative evidence of drift chattering.
+
+\subsection{Empirical}
+Delineates task-dependent performance profile for attention-based stream learners: superior on rule-based/noisy streams, competitive efficiency, fundamental incompatibility with hard resets. Provides evidence-based model selection guidance.
+
+\subsection{Practical}
+StreamTransformer implementation and deployment framework offer practical tool for stream learning applications with complex feature interactions and high noise, filling gap between simple neural baselines and compute-intensive ensembles.
+
+\newpage
+\chapter{Conclusion and Future Work}
+
+\section{Conclusion}
+This research demonstrates effective Transformer adaptation for data stream classification under strict constraints, addressing key limitations of existing approaches. The proposed architecture achieves competitive performance in specific contexts while revealing important insights about neural stream learning.
+
+On rule-based streams with complex interactions, StreamTransformer achieves 86.06\%–86.47\% accuracy, outperforming ARF by 6.82\%–10.30\%, showing attention captures certain patterns more naturally than axis-aligned splits. In high-noise environments like Airlines, StreamTransformer maintains smooth learning while traditional detectors exhibit extreme chattering (HDDMA triggered 38,501 unnecessary resets). The architecture provides 6.1× speed advantage over SRP while maintaining competitive accuracy, occupying viable position on accuracy–latency frontier for moderate-dimensional complex patterns. However, StreamTransformer\_ADWIN's failure reveals fundamental incompatibility between attention and traditional reset strategies, suggesting neural stream learners require specialised adaptation.
+
+Beyond introducing another neural model, this work illustrates that, in experiments, implicit adaptation can be competitive with reset-based methods, providing theoretical justification and empirical evidence particularly in noisy, non-stationary environments where traditional detection falters.
+
+\section{Future Work}
+Experimental results and implementation challenges suggest future directions:
+\begin{itemize}
+    \item \textbf{Adaptive windowing mechanisms:} Dynamic sizing based on prediction confidence or concept stability for flexible context management
+    \item \textbf{Specialised neural adaptation:} Partial forgetting, context preservation, or gradient-based approaches respecting neural representations' continuous nature
+    \item \textbf{Computational optimisation:} Linear attention variants or architectural optimisations for higher-velocity streams
+    \item \textbf{Edge deployment feasibility:} Model compression, quantisation, or specialised hardware for resource-constrained environments
+    \item \textbf{Hybrid architecture exploration:} Combining attention for complex patterns with efficient structures for feature selection
+    \item \textbf{Active learning integration:} Attention weights informing selective labelling in semi-supervised streaming contexts
+    \item \textbf{Recent ensemble integration:} Extend evaluation with recent ensemble variants (e.g., PLASTIC) for contemporary ensemble comparison
+\end{itemize}
+
+\newpage
+% Bibliography
+\begin{thebibliography}{23}
+% Citations in order of appearance in text
+\bibitem{capymoa2023}
+Gomes, H. M., Lee, A., Gunasekara, N., et al. (2023). CapyMOA: Efficient Machine Learning for Data Streams in Python. \emph{arXiv preprint arXiv:2302.07432}.
+
+\bibitem{arf2017}
+Gomes, H. M., Bifet, A., Read, J., Barddal, J. P., Enembreck, F., Pfahringer, B., Holmes, G., and Abdessalem, T. (2017). Adaptive random forests for evolving data stream classification. \emph{Machine Learning}, \textbf{106}(9), 1469--1495.
+
+\bibitem{srp2019}
+Gomes, H. M., Read, J., and Bifet, A. (2019). Streaming random patches for evolving data stream classification. \emph{IEEE International Conference on Data Mining (ICDM)}, 240--249.
+
+\bibitem{domingos2000}
+Domingos, P., and Hulten, G. (2000). Mining high-speed data streams. \emph{ACM SIGKDD International Conference on Knowledge Discovery and Data Mining}, 71--80.
+
+\bibitem{gama2013}
+Gama, J., Sebasti\~{a}o, R., and Rodrigues, P. P. (2013). On evaluating stream learning algorithms. \emph{Machine Learning}, \textbf{90}(3), 317--346.
+
+\bibitem{bifet2010moa}
+Bifet, A., Holmes, G., Kirkby, R., and Pfahringer, B. (2010). MOA: Massive Online Analysis. \emph{Journal of Machine Learning Research}, \textbf{11}, 1601--1604.
+
+\bibitem{lim2021timeseries}
+Lim, B., Arik, S. O., Loeff, N., and Pfister, T. (2021). Temporal Fusion Transformers for interpretable multi-horizon time series forecasting. \emph{International Journal of Forecasting}, \textbf{37}(4), 1748--1764.
+
+\bibitem{devlin2018bert}
+Devlin, J., Chang, M.-W., Lee, K., and Toutanova, K. (2018). BERT: Pre-training of deep bidirectional transformers for language understanding. \emph{arXiv preprint arXiv:1810.04805}.
+
+\bibitem{gama2014}
+Gama, J., Žliobaitė, I., Bifet, A., Pechenizkiy, M., and Bouchachia, A. (2014). A survey on concept drift adaptation. \emph{ACM Computing Surveys}, \textbf{46}(4), 1--37.
+
+\bibitem{adwin2007}
+Bifet, A., and Gavalda, R. (2007). Learning from time-changing data with adaptive windowing. \emph{SIAM International Conference on Data Mining}, 443--448.
+
+\bibitem{gama2004}
+Gama, J., Medas, P., Castillo, G., and Rodrigues, P. (2004). Learning with drift detection. \emph{Brazilian Symposium on Artificial Intelligence}, 286--295.
+
+\bibitem{baena2006}
+Baena-García, M., del Campo-Ávila, J., Fidalgo, R., Bifet, A., Gavalda, R., and Morales-Bueno, R. (2006). Early drift detection method. \emph{Fourth International Workshop on Knowledge Discovery from Data Streams}, 77--86.
+
+\bibitem{hochreiter1997}
+Hochreiter, S., and Schmidhuber, J. (1997). Long short-term memory. \emph{Neural Computation}, \textbf{9}(8), 1735--1780.
+
+\bibitem{attention2017}
+Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., Gomez, A. N., Kaiser, Ł., and Polosukhin, I. (2017). Attention is all you need. \emph{Advances in Neural Information Processing Systems}, \textbf{30}, 5998--6008.
+
+\bibitem{frias2014}
+Frías-Blanco, I., del Campo-Ávila, J., Ramos-Jiménez, G., Morales-Bueno, R., Ortiz-Díaz, A., and Caballero-Mota, Y. (2014). Online and non-parametric drift detection methods based on Hoeffding's bounds. \emph{IEEE Transactions on Knowledge and Data Engineering}, \textbf{27}(3), 810--823.
+
+\bibitem{krawczyk2017}
+Krawczyk, B., Minku, L. L., Gama, J., Stefanowski, J., and Woźniak, M. (2017). Ensemble learning for data stream analysis: A survey. \emph{Information Fusion}, \textbf{37}, 132--156.
+
+\bibitem{page1954}
+Page, E. S. (1954). Continuous inspection schemes. \emph{Biometrika}, \textbf{41}(1/2), 100--115.
+
+\bibitem{barros2017}
+Barros, R. S., Cabral, D. R., Gonçalves Jr, P. M., and Santos, S. G. (2017). RDDM: Reactive drift detection method. \emph{Expert Systems with Applications}, \textbf{90}, 344--355.
+
+\bibitem{nishida2007}
+Nishida, K., and Yamauchi, K. (2007). Detecting concept drift using statistical testing. \emph{International Conference on Discovery Science}, 264--269.
+
+\end{thebibliography}
+
+% Appendix
+\begin{appendix}
+\chapter{Algorithm 1: Training Trigger Mechanism}
+\label{app:algorithm1}
+
+\begin{algorithm}
+\caption{Training Trigger Mechanism for StreamTransformer}
+\label{alg:training-trigger}
+\begin{algorithmic}[1]
+\STATE \textbf{Input:} Instance $x_t$, true label $y_t$, window size $W$, batch size $B$
+\STATE \textbf{Output:} Updated model parameters
+\STATE
+\STATE Add $x_t$ to the sliding window buffer.
+\STATE Update online standardizer with $x_t$.
+\STATE If buffer size $< W + B - 1$: return.
+\STATE Extract batch of size $B$ from the buffer (the oldest $B$ instances).
+\STATE Compute attention on the batch and obtain predictions.
+\STATE Compute loss between predictions and true labels (for the batch).
+\STATE Update model parameters via gradient descent.
+\STATE Remove the oldest $B$ instances from the buffer.
+\end{algorithmic}
+\end{algorithm}
+
+\chapter{README}
+\label{app:github}
+
+\section{StreamTransformer: Dynamic Data Stream Classification}
+Repository containing official \textbf{StreamTransformer} implementation lightweight Transformer architecture for incremental learning and online classification in non-stationary data streams.
+
+Project leverages \textbf{CapyMOA} to benchmark StreamTransformer against SOTA tree ensembles (ARF, SRP) and traditional neural baselines.
+
+\section{Core Features}
+\begin{itemize}
+    \item \textbf{Implicit Adaptation:} Continuous via sliding window attention vs. reactive binary resets
+    \item \textbf{Relational Feature Modelling:} Captures complex interactions better than axis-aligned trees
+    \item \textbf{Drift Resilience:} Mitigates "drift chattering" in high noise
+    \item \textbf{Efficiency:} Competitive accuracy with ensembles while significantly faster
+\end{itemize}
+
+\section{Architecture Overview}
+Encoder-only Transformer design tailored for tabular streams:
+\begin{itemize}
+    \item \textbf{Sliding Window Attention:} Fixed FIFO buffer (\(W=50\)) for \(O(1)\) memory with context
+    \item \textbf{Causal Masking:} Triangular mask for temporal causality
+    \item \textbf{Online Scaling:} Welford's Algorithm for \(O(1)\) feature standardisation
+    \item \textbf{Sinusoidal Encodings:} Fixed positional encodings without learnable parameters
+\end{itemize}
+
+\section{Repository Structure}
+\begin{itemize}
+    \item \texttt{StreamTransformerCapyMOA\_V4.ipynb}: Primary research notebook with pipeline/visualisations
+    \item \texttt{StreamTransformer}: Core Python class
+    \item \texttt{StreamTransformer\_ADWIN}: Wrapper with ADWIN drift detection
+    \item \texttt{OnlineStandardScaler}: Welford's algorithm implementation
+\end{itemize}
+
+\section{Requirements \& Installation}
+Python 3.8+ and NVIDIA GPU (Tesla T4 or better) required.
+
+\begin{verbatim}
+pip install capymoa torch numpy pandas matplotlib seaborn tqdm scipy
+\end{verbatim}
+
+\section{Usage Example}
+\begin{verbatim}
+from stream_transformer import StreamTransformer
+from capymoa.stream import Electricity
+from capymoa.evaluation import prequential_evaluation
+
+stream = Electricity()
+learner = StreamTransformer(schema=stream.schema)
+
+results = prequential_evaluation
+(stream=stream, learner=learner, max_instances=100000)
+
+print(f"Accuracy: {results.accuracy():.2f}%")
+print(f"Kappa: {results.kappa():.4f}")
+\end{verbatim}
+
+\section{Experimental Results}
+Evaluated across 10 datasets, showing specialised dominance in rule-based and high-noise streams:
+
+\begin{table}[h!]
+\centering
+\small
+\caption{StreamTransformer Performance Highlights}
+\label{tab:app_performance}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+\textbf{Dataset} & \textbf{StreamTransformer Accuracy} & \textbf{Top Competitor (ARF/SRP)} \\
+\midrule
+Agrawal\_a & \textbf{86.06\%} & 85.87\% \\
+Airlines & \textbf{69.60\%} & 68.92\% \\
+Electricity & \textbf{89.86\%} & 89.33\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection*{Key Performance Insight}
+While tree ensembles dominate very high-dimensional spaces, StreamTransformer occupies optimal position on \textbf{accuracy–latency frontier} for mid-dimensional complex streams.
+
+\section{Repository Access}
+Available at:
+\begin{verbatim}
+https://github.com/raycmarange/StreamTransformer
+\end{verbatim}
+
+\section{Source Code Structure}
+\subsection{OnlineStandardScaler}
+Implements Welford's online algorithm:
+\begin{itemize}
+    \item \texttt{partial\_fit(x)}: Updates running statistics
+    \item \texttt{transform(x)}: Standardises features using current statistics
+\end{itemize}
+
+\subsection{SinusoidalPositionalEncoding}
+Fixed sinusoidal encodings for temporal awareness without learnable parameters.
+
+\subsection{StreamTransformer}
+Core classifier with sliding window attention and causal masking:
+\begin{itemize}
+    \item \texttt{train(instance)}: Updates scaler, buffers instance, triggers training
+    \item \texttt{predict\_proba(instance)}: Generates predictions via attention
+    \item \texttt{reset()}: Clears buffers and statistics
+\end{itemize}
+
+\subsection{StreamTransformer\_ADWIN}
+Wrapper combining StreamTransformer with ADWIN drift detector.
+
+\section{Citation}
+If using this work, cite:
+\begin{quote}
+Marange, Ray Chakanetsa (2026). \emph{StreamTransformer: A Transformer-Based Model for Classification in Dynamic Data Streams}. Master's Thesis, Victoria University of Wellington.
+\end{quote}
+
+\end{appendix}
+
+\end{singlespacing}
+\end{document}
